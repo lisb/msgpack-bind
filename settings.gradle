@@ -1,4 +1,4 @@
 rootProject.name = 'msgpack-bind-parent'
-include 'msgpack-bind'
-include 'msgpack-bind-processor'
+include 'msgpack-bind', 'msgpack-bind-processor'
+include 'example'
 
