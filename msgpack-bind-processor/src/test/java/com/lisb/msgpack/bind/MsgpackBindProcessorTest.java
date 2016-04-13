@@ -14,7 +14,9 @@ public class MsgpackBindProcessorTest {
                 .that(JavaFileObjects.forResource("SimpleSource.java"))
                 .processedWith(new MsgpackBindProcessor())
                 .compilesWithoutError()
-                .and().generatesSources(JavaFileObjects.forResource("SimpleSourceMarshaller.java"));
+                .and()
+                .generatesSources(JavaFileObjects.forResource("SimpleSourceMarshaller.java"),
+                        JavaFileObjects.forResource("SimpleSourceUnmarshaller.java"));
     }
 
     @Test
@@ -23,7 +25,9 @@ public class MsgpackBindProcessorTest {
                 .that(JavaFileObjects.forResource("ChainedSource.java"))
                 .processedWith(new MsgpackBindProcessor())
                 .compilesWithoutError()
-                .and().generatesSources(JavaFileObjects.forResource("ChainedSourceMarshaller.java"));
+                .and()
+                .generatesSources(JavaFileObjects.forResource("ChainedSourceMarshaller.java"),
+                        JavaFileObjects.forResource("ChainedSourceUnmarshaller.java"));
     }
 
     @Test
@@ -32,7 +36,9 @@ public class MsgpackBindProcessorTest {
                 .that(JavaFileObjects.forResource("com/lisb/msgpack/bind/PackagedSource.java"))
                 .processedWith(new MsgpackBindProcessor())
                 .compilesWithoutError()
-                .and().generatesSources(JavaFileObjects.forResource("com/lisb/msgpack/bind/PackagedSourceMarshaller.java"));
+                .and()
+                .generatesSources(JavaFileObjects.forResource("com/lisb/msgpack/bind/PackagedSourceMarshaller.java"),
+                        JavaFileObjects.forResource("com/lisb/msgpack/bind/PackagedSourceUnmarshaller.java"));
     }
 
 }

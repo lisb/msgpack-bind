@@ -1,8 +1,10 @@
 package com.lisb.msgpack.bind;
 
 import com.lisb.msgpack.bind.marshaller.ObjectMarshaller;
+import com.lisb.msgpack.bind.unmarshaller.ObjectUnmarshaller;
 import com.squareup.javapoet.*;
 import org.msgpack.core.MessagePacker;
+import org.msgpack.core.MessageUnpacker;
 
 import javax.annotation.processing.*;
 import javax.lang.model.SourceVersion;
@@ -34,15 +36,9 @@ public class MsgpackBindProcessor extends AbstractProcessor {
         this.elements = processingEnv.getElementUtils();
         this.types = processingEnv.getTypeUtils();
     }
-//
-//    @Override
-//    public SourceVersion getSupportedSourceVersion() {
-//        return SourceVersion.latestSupported();
-//    }
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-        // TODO generate Unmarshaller
         for (final Element element : roundEnv.getElementsAnnotatedWith(MsgpackBind.class)) {
             final TypeElement typeElement = (TypeElement) element;
 
@@ -51,31 +47,54 @@ public class MsgpackBindProcessor extends AbstractProcessor {
             final String baseClassName = Utils.getBaseClassName(typeElement);
             final String packageName = elements.getPackageOf(typeElement).getQualifiedName().toString();
 
-            final DeclaredType supperClass = types.getDeclaredType(
-                    elements.getTypeElement(ObjectMarshaller.class.getName()), typeElement.asType());
+            {
+                final DeclaredType marshallerSupperClass = types.getDeclaredType(
+                        elements.getTypeElement(ObjectMarshaller.class.getName()), typeElement.asType());
+                final TypeSpec marshaller = TypeSpec.classBuilder(baseClassName + Marshallers.SUFFIX_MARSHALLER)
+                        .addModifiers(Modifier.PUBLIC).superclass(TypeName.get(marshallerSupperClass))
+                        .addFields(createMarshallerFields(typeElement, fields))
+                        .addMethod(createMarshallerGetSizeMethod(typeElement, fields))
+                        .addMethod(createMarshallerMarshalContentMethod(typeElement, fields))
+                        .build();
 
-            final TypeSpec marshaller = TypeSpec.classBuilder(baseClassName + Marshallers.SUFFIX_MARSHALLER)
-                    .addModifiers(Modifier.PUBLIC).superclass(TypeName.get(supperClass))
-                    .addFields(createFields(typeElement, fields))
-                    .addMethod(createGetSizeMethod(typeElement, fields))
-                    .addMethod(createMarshalContentMethod(typeElement, fields))
-                    .build();
+                final JavaFile marshallerFile = JavaFile.builder(packageName, marshaller).build();
+                try {
+                    marshallerFile.writeTo(processingEnv.getFiler());
 
-            final JavaFile javaFile = JavaFile.builder(packageName, marshaller).build();
-            try {
-                javaFile.writeTo(processingEnv.getFiler());
-
-                if (DEBUG) {
-                    javaFile.writeTo(System.out);
+                    if (DEBUG) {
+                        marshallerFile.writeTo(System.out);
+                    }
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
                 }
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+            }
+
+            {
+                final DeclaredType unmarshallerSuperClass = types.getDeclaredType(
+                        elements.getTypeElement(ObjectUnmarshaller.class.getName()), typeElement.asType());
+                final TypeSpec unmarshaller = TypeSpec.classBuilder(baseClassName + Unmarshallers.SUFFIX_UNMARSHALLER)
+                        .addModifiers(Modifier.PUBLIC).superclass(TypeName.get(unmarshallerSuperClass))
+                        .addFields(createUnmarshallerFields(typeElement, fields))
+                        .addMethod(createUnmarshallerUnmarshalPropertyMethod(typeElement, fields))
+                        .addMethod(createNewInstanceMethod(typeElement))
+                        .build();
+
+                final JavaFile unmarshallerFile = JavaFile.builder(packageName, unmarshaller).build();
+                try {
+                    unmarshallerFile.writeTo(processingEnv.getFiler());
+
+                    if (DEBUG) {
+                        unmarshallerFile.writeTo(System.out);
+                    }
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
             }
         }
         return true;
     }
 
-    private List<FieldSpec> createFields(TypeElement element, List<Element> fields) {
+    private List<FieldSpec> createMarshallerFields(TypeElement element, List<Element> fields) {
         final List<FieldSpec> fieldSpecs = new ArrayList<>(fields.size());
         for (final Element field : fields) {
             TypeMirror fieldType = field.asType();
@@ -95,7 +114,7 @@ public class MsgpackBindProcessor extends AbstractProcessor {
         return fieldSpecs;
     }
 
-    private MethodSpec createGetSizeMethod(TypeElement element, List<Element> fields) {
+    private MethodSpec createMarshallerGetSizeMethod(TypeElement element, List<Element> fields) {
         final MethodSpec.Builder getSize = MethodSpec.methodBuilder("getSize").addModifiers(Modifier.PROTECTED)
                 .addParameter(TypeName.get(element.asType()), "target").returns(int.class);
 
@@ -114,7 +133,7 @@ public class MsgpackBindProcessor extends AbstractProcessor {
         return getSize.build();
     }
 
-    private MethodSpec createMarshalContentMethod(TypeElement element, List<Element> fields) {
+    private MethodSpec createMarshallerMarshalContentMethod(TypeElement element, List<Element> fields) {
         final MethodSpec.Builder marshalContent = MethodSpec.methodBuilder("marshalContent")
                 .addModifiers(Modifier.PROTECTED).addParameter(MessagePacker.class, "packer")
                 .addParameter(TypeName.get(element.asType()), "target").addException(IOException.class);
@@ -145,6 +164,59 @@ public class MsgpackBindProcessor extends AbstractProcessor {
             }
         }
         return nonNullCount;
+    }
+
+    private List<FieldSpec> createUnmarshallerFields(TypeElement element, List<Element> fields) {
+        final List<FieldSpec> fieldSpecs = new ArrayList<>(fields.size());
+
+        for (final Element field : fields) {
+            TypeMirror fieldType = field.asType();
+
+            if (fieldType.getKind().isPrimitive()) {
+                fieldType = types.boxedClass((PrimitiveType) fieldType).asType();
+            }
+
+            final DeclaredType newFieldType = types.getDeclaredType(elements
+                    .getTypeElement(Unmarshaller.class.getName()), fieldType);
+            final FieldSpec fieldSpec = FieldSpec.builder(TypeName.get(newFieldType),
+                    field.getSimpleName() + Unmarshallers.SUFFIX_UNMARSHALLER, Modifier.PRIVATE, Modifier.FINAL)
+                    .initializer(Unmarshallers.getUnmarshaller(types, elements, fieldType))
+                    .build();
+
+            fieldSpecs.add(fieldSpec);
+        }
+
+        return fieldSpecs;
+    }
+
+    private MethodSpec createUnmarshallerUnmarshalPropertyMethod(TypeElement element, List<Element> fields) {
+        final MethodSpec.Builder unmarshalProperty = MethodSpec.methodBuilder("unmarshalProperty")
+                .addModifiers(Modifier.PROTECTED).addParameter(MessageUnpacker.class, "unpacker")
+                .addParameter(TypeName.get(element.asType()), "target").addParameter(String.class, "propertyName")
+                .returns(boolean.class).addException(IOException.class);
+
+        unmarshalProperty.beginControlFlow("switch(propertyName)");
+        for (final Element field : fields) {
+            unmarshalProperty.beginControlFlow("case $S:", field.getSimpleName());
+            unmarshalProperty.addStatement("target.$N = $NUnmarshaller.unmarshal(unpacker)", field.getSimpleName(),
+                    field.getSimpleName());
+            unmarshalProperty.addStatement("return true");
+            unmarshalProperty.endControlFlow();
+        }
+        unmarshalProperty.endControlFlow();
+
+        unmarshalProperty.addStatement("return false");
+
+        return unmarshalProperty.build();
+    }
+
+    private MethodSpec createNewInstanceMethod(TypeElement element) {
+        final MethodSpec.Builder newInstance = MethodSpec.methodBuilder("newInstance").addModifiers(Modifier.PROTECTED)
+                .returns(TypeName.get(element.asType()));
+
+        newInstance.addStatement("return new $T()", element);
+
+        return newInstance.build();
     }
 
     private List<Element> getFields(final TypeElement element) {

@@ -15,10 +15,9 @@ import java.util.*;
 
 class Marshallers {
 
-    private static final List<Initializer> marshallers;
+    static final String SUFFIX_MARSHALLER = "Marshaller";
 
-    public static final String SUFFIX_MARSHALLER = "Marshaller";
-    public static final String SUFFIX_UNMARSHALLER = "Unmarshaller";
+    private static final List<Initializer> marshallers;
 
     static {
         marshallers = new ArrayList<>();
@@ -45,7 +44,7 @@ class Marshallers {
     private Marshallers() {
     }
 
-    public static CodeBlock getMarshaller(Types types, Elements elements, TypeMirror type) {
+    static CodeBlock getMarshaller(Types types, Elements elements, TypeMirror type) {
         if (type.getKind().isPrimitive()) {
             type = types.boxedClass((PrimitiveType) type).asType();
         }
