@@ -41,4 +41,23 @@ public class MsgpackBindProcessorTest {
                         JavaFileObjects.forResource("com/lisb/msgpack/bind/PackagedSourceUnmarshaller.java"));
     }
 
+    @Test
+    public void testMarshallerOnlySource() throws Throwable {
+        assert_().about(javaSource())
+                .that(JavaFileObjects.forResource("MarshallerOnlySource.java"))
+                .processedWith(new MsgpackBindProcessor())
+                .compilesWithoutError()
+                .and()
+                .generatesSources(JavaFileObjects.forResource("MarshallerOnlySourceMarshaller.java"));
+    }
+
+    @Test
+    public void testUnmarshallerOnlySource() throws Throwable {
+        assert_().about(javaSource())
+                .that(JavaFileObjects.forResource("UnmarshallerOnlySource.java"))
+                .processedWith(new MsgpackBindProcessor())
+                .compilesWithoutError()
+                .and()
+                .generatesSources(JavaFileObjects.forResource("UnmarshallerOnlySourceUnmarshaller.java"));
+    }
 }

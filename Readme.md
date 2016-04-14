@@ -1,8 +1,6 @@
 # msgpack-bind
 
-## Usage Example
-
-### Primisives Examples
+## Primisives Examples
 
 
 ```Java
@@ -23,6 +21,10 @@ new UserMarshaller().marshal(packer, user);
 // unmarshal
 User user = new UserUnmarshaller().unmarshal(unpacker);
 ```
+
+## Generate either Marshaller or Unmarshaller
+
+Use `@MsgpackBind(GenerateType.MARSHALLER)` or `@MsgpackBind(GenerateType.UNMARSHALLER)`.
 
 ## License
 
