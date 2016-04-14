@@ -60,4 +60,15 @@ public class MsgpackBindProcessorTest {
                 .and()
                 .generatesSources(JavaFileObjects.forResource("UnmarshallerOnlySourceUnmarshaller.java"));
     }
+
+    @Test
+    public void testSubclassSource() throws Throwable {
+        assert_().about(javaSource())
+                .that(JavaFileObjects.forResource("SubclassSource.java"))
+                .processedWith(new MsgpackBindProcessor())
+                .compilesWithoutError()
+                .and()
+                .generatesSources(JavaFileObjects.forResource("SubclassSourceMarshaller.java"),
+                        JavaFileObjects.forResource("SubclassSourceUnmarshaller.java"));
+    }
 }
