@@ -26,6 +26,10 @@ User user = new UserUnmarshaller().unmarshal(unpacker);
 
 Use `@MsgpackBind(GenerateType.MARSHALLER)` or `@MsgpackBind(GenerateType.UNMARSHALLER)`.
 
+## Property-based access
+
+Use `@Access(AccessType.PROPERTY)`.
+
 ## License
 
 msgpack-bind is released under The MIT License.

@@ -85,7 +85,7 @@ class Marshallers {
 
         @Override
         public boolean match(Types types, Elements elements, TypeMirror mirror) {
-            return types.isSameType(elements.getTypeElement(targetClass.getName()).asType(), mirror);
+            return Utils.isSameType(types, elements, mirror, targetClass);
         }
     }
 
@@ -103,17 +103,14 @@ class Marshallers {
         @Override
         public boolean match(Types types, Elements elements, TypeMirror mirror) {
             final DeclaredType simpleType = types.getDeclaredType((TypeElement) types.asElement(mirror));
-            return isSameType(types, elements, simpleType, Collection.class) ||
-                    isSameType(types, elements, simpleType, List.class) ||
-                    isSameType(types, elements, simpleType, LinkedList.class) ||
-                    isSameType(types, elements, simpleType, ArrayList.class) ||
-                    isSameType(types, elements, simpleType, Set.class) ||
-                    isSameType(types, elements, simpleType, HashSet.class);
+            return Utils.isSameType(types, elements, simpleType, Collection.class) ||
+                    Utils.isSameType(types, elements, simpleType, List.class) ||
+                    Utils.isSameType(types, elements, simpleType, LinkedList.class) ||
+                    Utils.isSameType(types, elements, simpleType, ArrayList.class) ||
+                    Utils.isSameType(types, elements, simpleType, Set.class) ||
+                    Utils.isSameType(types, elements, simpleType, HashSet.class);
         }
 
-        private boolean isSameType(Types types, Elements elements, DeclaredType simpleType, Class<?> clz) {
-            return types.isSameType(simpleType, types.getDeclaredType(elements.getTypeElement(clz.getName())));
-        }
     }
 
     private static class EnumInitializer implements Initializer {
@@ -144,12 +141,8 @@ class Marshallers {
         @Override
         public boolean match(Types types, Elements elements, TypeMirror mirror) {
             final DeclaredType simpleType = types.getDeclaredType((TypeElement) types.asElement(mirror));
-            return isSameType(types, elements, simpleType, Map.class) ||
-                    isSameType(types, elements, simpleType, HashMap.class);
-        }
-
-        private boolean isSameType(Types types, Elements elements, DeclaredType simpleType, Class<?> clz) {
-            return types.isSameType(simpleType, types.getDeclaredType(elements.getTypeElement(clz.getName())));
+            return Utils.isSameType(types, elements, simpleType, Map.class) ||
+                    Utils.isSameType(types, elements, simpleType, HashMap.class);
         }
     }
 

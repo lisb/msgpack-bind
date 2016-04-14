@@ -6,7 +6,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.SOURCE)
-@Target(ElementType.FIELD)
-public @interface Property {
-    String value();
+@Target(ElementType.TYPE)
+public @interface Access {
+
+    AccessType value() default AccessType.FIELD;
+
+    enum AccessType {
+        FIELD, PROPERTY
+    }
 }

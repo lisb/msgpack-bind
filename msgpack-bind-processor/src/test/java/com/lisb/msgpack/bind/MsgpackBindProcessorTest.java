@@ -71,4 +71,42 @@ public class MsgpackBindProcessorTest {
                 .generatesSources(JavaFileObjects.forResource("SubclassSourceMarshaller.java"),
                         JavaFileObjects.forResource("SubclassSourceUnmarshaller.java"));
     }
+
+    @Test
+    public void testAccessTypePropertySource() throws Throwable {
+        assert_().about(javaSource())
+                .that(JavaFileObjects.forResource("AccessTypePropertySource.java"))
+                .processedWith(new MsgpackBindProcessor())
+                .compilesWithoutError()
+                .and()
+                .generatesSources(JavaFileObjects.forResource("AccessTypePropertySourceMarshaller.java"),
+                        JavaFileObjects.forResource("AccessTypePropertySourceUnmarshaller.java"));
+    }
+
+    @Test
+    public void testNoPairedPropertySource() throws Throwable {
+        assert_().about(javaSource())
+                .that(JavaFileObjects.forResource("NoPairedPropertySource.java"))
+                .processedWith(new MsgpackBindProcessor())
+                .failsToCompile();
+    }
+
+    @Test
+    public void testClassDifferentBetweenSetterAndGetterSource() throws Throwable {
+        assert_().about(javaSource())
+                .that(JavaFileObjects.forResource("ClassDifferentBetweenSetterAndGetterSource.java"))
+                .processedWith(new MsgpackBindProcessor())
+                .failsToCompile();
+    }
+
+    @Test
+    public void testSubclassPropertySource() throws Throwable {
+        assert_().about(javaSource())
+                .that(JavaFileObjects.forResource("SubclassPropertySource.java"))
+                .processedWith(new MsgpackBindProcessor())
+                .compilesWithoutError()
+                .and()
+                .generatesSources(JavaFileObjects.forResource("SubclassPropertySourceMarshaller.java"),
+                        JavaFileObjects.forResource("SubclassPropertySourceUnmarshaller.java"));
+    }
 }
