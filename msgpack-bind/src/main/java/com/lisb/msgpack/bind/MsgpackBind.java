@@ -9,4 +9,8 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface MsgpackBind {
     GenerateType value() default GenerateType.BOTH;
+
+    enum GenerateType {
+        MARSHALLER, UNMARSHALLER, BOTH
+    }
 }

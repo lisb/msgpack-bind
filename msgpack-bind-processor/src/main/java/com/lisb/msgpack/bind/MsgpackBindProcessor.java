@@ -43,14 +43,14 @@ public class MsgpackBindProcessor extends AbstractProcessor {
             final TypeElement typeElement = (TypeElement) element;
 
             final MsgpackBind msgpackBind = typeElement.getAnnotation(MsgpackBind.class);
-            final GenerateType generateType = msgpackBind.value();
+            final MsgpackBind.GenerateType generateType = msgpackBind.value();
 
             final List<Element> fields = getFields(typeElement);
 
             final String baseClassName = Utils.getBaseClassName(typeElement);
             final String packageName = elements.getPackageOf(typeElement).getQualifiedName().toString();
 
-            if (GenerateType.BOTH.equals(generateType) || GenerateType.MARSHALLER.equals(generateType)) {
+            if (MsgpackBind.GenerateType.BOTH.equals(generateType) || MsgpackBind.GenerateType.MARSHALLER.equals(generateType)) {
                 final DeclaredType marshallerSupperClass = types.getDeclaredType(
                         elements.getTypeElement(ObjectMarshaller.class.getName()), typeElement.asType());
                 final TypeSpec marshaller = TypeSpec.classBuilder(baseClassName + Marshallers.SUFFIX_MARSHALLER)
@@ -72,7 +72,7 @@ public class MsgpackBindProcessor extends AbstractProcessor {
                 }
             }
 
-            if (GenerateType.BOTH.equals(generateType) || GenerateType.UNMARSHALLER.equals(generateType)) {
+            if (MsgpackBind.GenerateType.BOTH.equals(generateType) || MsgpackBind.GenerateType.UNMARSHALLER.equals(generateType)) {
                 final DeclaredType unmarshallerSuperClass = types.getDeclaredType(
                         elements.getTypeElement(ObjectUnmarshaller.class.getName()), typeElement.asType());
                 final TypeSpec unmarshaller = TypeSpec.classBuilder(baseClassName + Unmarshallers.SUFFIX_UNMARSHALLER)
