@@ -117,4 +117,15 @@ public class MsgpackBindProcessorTest {
                 .processedWith(new MsgpackBindProcessor())
                 .failsToCompile();
     }
+
+    @Test
+    public void testGenericsSource() throws Throwable {
+        assert_().about(javaSource())
+                .that(JavaFileObjects.forResource("SubGenericsSource.java"))
+                .processedWith(new MsgpackBindProcessor())
+                .compilesWithoutError()
+                .and()
+                .generatesSources(JavaFileObjects.forResource("SubGenericsSourceMarshaller.java"),
+                        JavaFileObjects.forResource("SubGenericsSourceUnmarshaller.java"));
+    }
 }

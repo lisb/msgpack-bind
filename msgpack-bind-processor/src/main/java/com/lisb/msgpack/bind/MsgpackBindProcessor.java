@@ -9,10 +9,7 @@ import org.msgpack.core.MessageUnpacker;
 import javax.annotation.processing.*;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.*;
-import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.PrimitiveType;
-import javax.lang.model.type.TypeKind;
-import javax.lang.model.type.TypeMirror;
+import javax.lang.model.type.*;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
@@ -260,7 +257,7 @@ public class MsgpackBindProcessor extends AbstractProcessor {
                     && !modifiers.contains(Modifier.STATIC) && !modifiers.contains(Modifier.FINAL)) {
                 // public instance field only
                 final String name = member.getSimpleName().toString();
-                final TypeMirror type = member.asType();
+                final TypeMirror type = types.asMemberOf((DeclaredType) element.asType(), member);
                 Property property = map.get(name);
                 if (property == null) {
                     property = new Property();
@@ -329,14 +326,15 @@ public class MsgpackBindProcessor extends AbstractProcessor {
 
                 TypeMirror type = null;
                 final ExecutableElement method = (ExecutableElement) member;
+                final ExecutableType methodType = (ExecutableType) types.asMemberOf((DeclaredType) element.asType(), member);
                 boolean isSetter = false;
                 if (isSetter(method) && isGenerateUnmarshaller(generateType)) {
                     name = Utils.decapitalize(name.substring(SETTER_PREFIX.length()));
-                    type = method.getParameters().get(0).asType();
+                    type = methodType.getParameterTypes().get(0);
                     isSetter = true;
                 } else if (isGetter(method) && isGenerateMarshaller(generateType)) {
                     name = Utils.decapitalize(name.substring(GETTER_PREFIX.length()));
-                    type = method.getReturnType();
+                    type = methodType.getReturnType();
                     isSetter = false;
                 }
 

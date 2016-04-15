@@ -44,7 +44,7 @@ class Marshallers {
     private Marshallers() {
     }
 
-    static CodeBlock getMarshaller(Types types, Elements elements, TypeMirror type) {
+    public static CodeBlock getMarshaller(Types types, Elements elements, TypeMirror type) {
         if (type.getKind().isPrimitive()) {
             type = types.boxedClass((PrimitiveType) type).asType();
         }
