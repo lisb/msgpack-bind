@@ -109,4 +109,12 @@ public class MsgpackBindProcessorTest {
                 .generatesSources(JavaFileObjects.forResource("SubclassPropertySourceMarshaller.java"),
                         JavaFileObjects.forResource("SubclassPropertySourceUnmarshaller.java"));
     }
+
+    @Test
+    public void testDuplicatedFieldSource() throws Throwable {
+        assert_().about(javaSource())
+                .that(JavaFileObjects.forResource("DuplicatedFieldSource.java"))
+                .processedWith(new MsgpackBindProcessor())
+                .failsToCompile();
+    }
 }

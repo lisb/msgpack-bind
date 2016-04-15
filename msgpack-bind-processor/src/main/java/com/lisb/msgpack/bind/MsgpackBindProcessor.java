@@ -253,21 +253,30 @@ public class MsgpackBindProcessor extends AbstractProcessor {
 
     private List<Property> getFields(final TypeElement element) {
         final List<? extends Element> allMembers = elements.getAllMembers(element);
-        final List<Property> properties = new ArrayList<>(allMembers.size());
+        final Map<String, Property> map = new LinkedHashMap<>(allMembers.size() * 2);
         for (final Element member : allMembers) {
             final Set<Modifier> modifiers = member.getModifiers();
             if (member.getKind().isField() && modifiers.contains(Modifier.PUBLIC)
                     && !modifiers.contains(Modifier.STATIC) && !modifiers.contains(Modifier.FINAL)) {
                 // public instance field only
-                final Property property = new Property();
-                property.setName(member.getSimpleName().toString());
-                property.setType(member.asType());
-                property.setGettable(true);
-                property.setSettable(!modifiers.contains(Modifier.FINAL));
-                properties.add(property);
+                final String name = member.getSimpleName().toString();
+                final TypeMirror type = member.asType();
+                Property property = map.get(name);
+                if (property == null) {
+                    property = new Property();
+                    property.setName(name);
+                    property.setType(type);
+                    property.setGettable(true);
+                    property.setSettable(true);
+                    map.put(name, property);
+                } else {
+                    processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR,
+                            "Field duplicated is unsupported. property:" + property + ", member:" + member, element);
+                }
             }
         }
 
+        final ArrayList<Property> properties = new ArrayList<>(map.values());
         if (DEBUG) {
             System.out.println("fields=" + properties);
         }
@@ -301,7 +310,7 @@ public class MsgpackBindProcessor extends AbstractProcessor {
 
     private List<Property> getProperties(final TypeElement element) {
         final List<? extends Element> allMembers = elements.getAllMembers(element);
-        final Map<String, Property> map = new HashMap<>(allMembers.size() * 2);
+        final Map<String, Property> map = new LinkedHashMap<>(allMembers.size() * 2);
         final MsgpackBind.GenerateType generateType = element.getAnnotation(MsgpackBind.class).value();
         for (final Element member : allMembers) {
             final ElementKind memberKind = member.getKind();
