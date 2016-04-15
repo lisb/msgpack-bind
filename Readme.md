@@ -6,7 +6,7 @@
 ```Java
 @MsgpackBind
 public class User {
-    // [implementing] @Property("name")
+    @Name("name")
     public String displayName;
     public int age;
     // [implementing] @Ignore

@@ -81,7 +81,7 @@ public class SimpleSourceMarshaller extends ObjectMarshaller<SimpleSource> {
             sixthMarshaller.marshal(packer, target.sixth);
         }
         if (target.seventh != null) {
-            packer.packString("seventh");
+            packer.packString("seven");
             seventhMarshaller.marshal(packer, target.seventh);
         }
     }

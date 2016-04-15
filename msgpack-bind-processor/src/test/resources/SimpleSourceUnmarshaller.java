@@ -54,7 +54,7 @@ public class SimpleSourceUnmarshaller extends ObjectUnmarshaller<SimpleSource> {
                 target.sixth = sixthUnmarshaller.unmarshal(unpacker);
                 return true;
             }
-            case "seventh": {
+            case "seven": {
                 target.seventh = seventhUnmarshaller.unmarshal(unpacker);
                 return true;
             }

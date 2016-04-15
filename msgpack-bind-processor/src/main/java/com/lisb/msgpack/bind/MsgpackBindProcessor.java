@@ -165,7 +165,7 @@ public class MsgpackBindProcessor extends AbstractProcessor {
                     marshalContent.beginControlFlow("if (target.get$N() != null)", Utils.capitalize(property.getName()));
                 }
             }
-            marshalContent.addStatement("packer.packString($S)", property.getName());
+            marshalContent.addStatement("packer.packString($S)", property.getKey());
             if (Access.AccessType.FIELD.equals(accessType)) {
                 marshalContent.addStatement("$N.marshal(packer, target.$N)",
                         property.getName() + Marshallers.SUFFIX_MARSHALLER, property.getName());
@@ -224,7 +224,7 @@ public class MsgpackBindProcessor extends AbstractProcessor {
 
         unmarshalProperty.beginControlFlow("switch(propertyName)");
         for (final Property property : properties) {
-            unmarshalProperty.beginControlFlow("case $S:", property.getName());
+            unmarshalProperty.beginControlFlow("case $S:", property.getKey());
             if (Access.AccessType.FIELD.equals(accessType)) {
                 unmarshalProperty.addStatement("target.$N = $NUnmarshaller.unmarshal(unpacker)", property.getName(),
                         property.getName());
@@ -252,7 +252,7 @@ public class MsgpackBindProcessor extends AbstractProcessor {
     }
 
     private List<Property> getFields(final TypeElement element) {
-        final List<? extends Element> allMembers = elements.getAllMembers(element);
+        final List<? extends Element> allMembers = Utils.getAllMembers(types, element);
         final Map<String, Property> map = new LinkedHashMap<>(allMembers.size() * 2);
         for (final Element member : allMembers) {
             final Set<Modifier> modifiers = member.getModifiers();
@@ -268,6 +268,7 @@ public class MsgpackBindProcessor extends AbstractProcessor {
                     property.setType(type);
                     property.setGettable(true);
                     property.setSettable(true);
+                    property.setNameAnnotation(member.getAnnotation(Name.class));
                     map.put(name, property);
                 } else {
                     processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR,
@@ -309,7 +310,7 @@ public class MsgpackBindProcessor extends AbstractProcessor {
     }
 
     private List<Property> getProperties(final TypeElement element) {
-        final List<? extends Element> allMembers = elements.getAllMembers(element);
+        final List<? extends Element> allMembers = Utils.getAllMembers(types, element);
         final Map<String, Property> map = new LinkedHashMap<>(allMembers.size() * 2);
         final MsgpackBind.GenerateType generateType = element.getAnnotation(MsgpackBind.class).value();
         for (final Element member : allMembers) {
@@ -341,15 +342,27 @@ public class MsgpackBindProcessor extends AbstractProcessor {
 
                 if (type != null) {
                     Property property = map.get(name);
+
+                    final Name nameAnnotation = method.getAnnotation(Name.class);
                     if (property == null) {
                         property = new Property();
                         property.setName(name);
                         property.setType(type);
+                        property.setNameAnnotation(nameAnnotation);
                         map.put(name, property);
                     } else {
                         if (!types.isSameType(property.getType(), type)) {
                             processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR,
                                     "Can't decide property type. property:" + property + ", member:" + member, element);
+                        }
+
+                        if (nameAnnotation != null) {
+                            if (property.getNameAnnotation() == null) {
+                                property.setNameAnnotation(nameAnnotation);
+                            } else if (!property.getNameAnnotation().value().equals(nameAnnotation)) {
+                                processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR,
+                                        "Name Annotation duplicated. property:" + property + ", member:" + member, element);
+                            }
                         }
                     }
 
@@ -392,6 +405,7 @@ public class MsgpackBindProcessor extends AbstractProcessor {
         private String name;
         private boolean settable;
         private boolean gettable;
+        private Name nameAnnotation;
 
         public TypeMirror getType() {
             return type;
@@ -425,10 +439,27 @@ public class MsgpackBindProcessor extends AbstractProcessor {
             this.gettable = gettable;
         }
 
+        public Name getNameAnnotation() {
+            return nameAnnotation;
+        }
+
+        public void setNameAnnotation(Name nameAnnotation) {
+            this.nameAnnotation = nameAnnotation;
+        }
+
+        public String getKey() {
+            return nameAnnotation != null ? nameAnnotation.value() : name;
+        }
+
         @Override
         public String toString() {
-            return "{\n" + "\ttype:" + type + ",\n\tname:" + name + ",\n\tsettable:" + settable
-                    + ",\n\tgettable:" + gettable + "\n}";
+            String s = "{\n" + "\ttype:" + type + ",\n\tname:" + name + ",\n\tsettable:" + settable
+                    + ",\n\tgettable:" + gettable + "\n";
+            if (nameAnnotation != null) {
+                s += "\tnameAnnotation:" + nameAnnotation.value() + "\n";
+            }
+            s += "}";
+            return s;
         }
     }
 }

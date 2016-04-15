@@ -1,5 +1,6 @@
 import com.lisb.msgpack.bind.Access;
 import com.lisb.msgpack.bind.MsgpackBind;
+import com.lisb.msgpack.bind.Name;
 
 @MsgpackBind
 @Access(Access.AccessType.PROPERTY)
@@ -25,5 +26,13 @@ public class AccessTypePropertySource {
     // the function is not setter, setter return void.
     public String setSecond(String second) {
         return second;
+    }
+
+    @Name("third")
+    public int getThree() {
+        return 0;
+    }
+
+    public void setThree(int three) {
     }
 }

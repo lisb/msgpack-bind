@@ -2,12 +2,12 @@ package com.lisb.msgpack.bind;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.type.WildcardType;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 
 class Utils {
@@ -81,5 +81,19 @@ class Utils {
         final char c[] = string.toCharArray();
         c[0] = Character.toUpperCase(c[0]);
         return new String(c);
+    }
+
+    /**
+     * Difference from {@link Elements#getAllMembers(TypeElement)} is members order.
+     */
+    public static List<Element> getAllMembers(Types types, TypeElement element) {
+        final ArrayList<Element> members = new ArrayList<>();
+        TypeMirror type = element.asType();
+        while (type.getKind() != TypeKind.NONE) {
+            members.addAll(0, element.getEnclosedElements());
+            type = element.getSuperclass();
+            element = (TypeElement) types.asElement(type);
+        }
+        return members;
     }
 }
